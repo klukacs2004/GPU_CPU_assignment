@@ -1,0 +1,3 @@
+C:/Users/User/OneDrive/Dokumentumok/Physics MSc/GPU/GPU_CPU_asignment/build/CMakeFiles/bifurcation_generator_CPU.dir
+C:/Users/User/OneDrive/Dokumentumok/Physics MSc/GPU/GPU_CPU_asignment/build/CMakeFiles/edit_cache.dir
+C:/Users/User/OneDrive/Dokumentumok/Physics MSc/GPU/GPU_CPU_asignment/build/CMakeFiles/rebuild_cache.dir
