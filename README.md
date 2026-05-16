@@ -51,16 +51,23 @@ Build the executable:
 ```bash
 cmake --build build
 ```
+On Windows, I used the Clang compiler with the following flags:
+```shell
+/O2 /W4 /fp:fast /arch:AVX2
+```
+For convenience, I also included a CMakeLists.txt file that supports both Linux and Windows builds.
 
 ## Run
 
 Run the CPU bifurcation generator:
 ```bash
-.\build\bifurcation_generator_CPU.exe 0.0 1.0 2.5 4.0 2048 2048  
+.\build\bifurcation_generator_CPU.exe --xmin 0.0 --xmax 1.0 --rmin 2.5 --rmax 4.0 --nx 2048 --ny 2048   
 ```
 Here, the first two values define the lower and upper bounds of the population variable \(x\).  The next two values specify the lower and upper bounds of the parameter \(r\).  The last value sets the resolution of the generated image.
 
 The command above produces a bifurcation diagram with a resolution of 2048×2048 pixels.
+
+
 
 ## Plot the Bifurcation Diagram
 ```bash

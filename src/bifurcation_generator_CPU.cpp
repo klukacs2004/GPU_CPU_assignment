@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <chrono>
 #include <fstream>
+#include <filesystem>
 
 #include <thread>
 #include <future>
@@ -45,20 +46,27 @@ struct DiaGenParameters {
     float x_range_inv;
     float r_step;
 
-    //Constructor to initialize the parameters and precompute values for optimization
-    DiaGenParameters() {
-        x_range_inv = 1.0f / (x_max - x_min);
-        r_step = (r_max - r_min) / (x_axis - 1);
-    }
-    DiaGenParameters(float x_min_, float x_max_, float r_min_, float r_max_, int resolution_x, int resolution_y) :
-        x_axis(resolution_x),
-        y_axis(resolution_y),
-        x_min(x_min_),
-        x_max(x_max_),
-        r_min(r_min_),
-        r_max(r_max_){
+    // Define  a function to avoid duplicated initialization
+    private:
+        void initialize_derived_parameters() {
             x_range_inv = 1.0f / (x_max - x_min);       //Precompute the inverse of the x range for faster calculation
-            r_step = (r_max - r_min) / (x_axis - 1);    //Precompute the step size for r values to avoid redundant calculations
+            r_step = (r_max - r_min) / (x_axis - 1);      //Precompute the step size for r values to avoid redundant calculations
+        }
+
+    //Constructor to initialize the parameters
+    public:
+        DiaGenParameters() {
+            initialize_derived_parameters();
+        }
+
+        DiaGenParameters(float x_min_, float x_max_, float r_min_, float r_max_, int resolution_x, int resolution_y) :
+            x_axis(resolution_x),
+            y_axis(resolution_y),
+            x_min(x_min_),
+            x_max(x_max_),
+            r_min(r_min_),
+            r_max(r_max_){
+               initialize_derived_parameters();   
         }
 };
 
@@ -92,20 +100,68 @@ void calculate_columns(int i_start, int i_end, const DiaGenParameters& params, D
 }
 
 int main(int argc, char* argv[]) {
-    if (argc < 6) {
-        cerr << "Usage: program x_min x_max r_min r_max resolution\n";
-        return 1;
-    }
-
     //Output directory for the generated files (can be modified as needed)
-    const string output_dir = "C:\\Users\\User\\OneDrive\\Dokumentumok\\Physics MSc\\GPU\\GPU_CPU_asignment\\data\\";
+    const filesystem::path output_dir = "data";
 
-    //Parse command line arguments in vars 
-    DiaGenParameters params(stof(argv[1]), stof(argv[2]), stof(argv[3]), stof(argv[4]), stoi(argv[5]), stoi(argv[6]));
+    //Parse command line arguments in vars
+    float x_min = 0.0f; 
+    float x_max = 1.0f; 
+    float r_min = 2.5f; 
+    float r_max = 4.0f; 
+    int nx = 2048; 
+    int ny = 2048; 
+    int n_threads = std::thread::hardware_concurrency(); // /2 I tried to divide it by two but it got slower so passed it
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+
+        // 
+        if (arg == "--help" || arg == "-h") {
+            cout <<
+                R"(Usage:
+                bifurcation_generator_CPU.exe [options]
+
+                Options:
+                --xmin <float>       Minimum x value
+                --xmax <float>       Maximum x value
+                --rmin <float>       Minimum r value
+                --rmax <float>       Maximum r value
+                --nx <int>           Horizontal resolution
+                --ny <int>           Vertical resolution
+
+                Example:
+                .\build\bifurcation_generator_CPU.exe ^
+                    --xmin 0.0 ^
+                    --xmax 1.0 ^
+                    --rmin 2.5 ^
+                    --rmax 4.0 ^
+                    --nx 2048 ^
+                    --ny 2048 ^
+                )"
+            << endl;
+
+            return 0;
+        }
+
+        if (arg == "--xmin") x_min = std::stof(argv[++i]);
+        else if (arg == "--xmax") x_max = std::stof(argv[++i]);
+        else if (arg == "--rmin") r_min = std::stof(argv[++i]);
+        else if (arg == "--rmax") r_max = std::stof(argv[++i]);
+        else if (arg == "--nx") nx = std::stoi(argv[++i]);
+        else if (arg == "--ny") ny = std::stoi(argv[++i]);
+        else {
+            cerr << "Unknown or incomplete argument: " << arg << "\n";
+            cerr << "Use --help for usage information.\n";
+            return 1;
+        }
+    } 
+
+    // Set the parsed parameters
+    DiaGenParameters params(x_min, x_max, r_min, r_max, nx, ny);
 
     //Generate filenames for the output files
-    const string time_measurements_filename = "bifurcation_runtimes_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
-    const string diagram_filename = "bifurcation_diagram_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
+    const filesystem::path time_measurements_filename = "bifurcation_runtimes_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
+    const filesystem::path diagram_filename = "bifurcation_diagram_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
 
     //Preallocate the diagram matrix for better cache performance
     DiagramMatrix diagram_matrix(params.x_axis * params.y_axis, 0);
@@ -115,14 +171,14 @@ int main(int argc, char* argv[]) {
     const int progress_update_interval = 100 / NTIME ;
     vector<double> time_measurements(NTIME);
 
-    cout << "Starting bifurcation diagram generation with resolution " << params.x_axis << "x" << params.y_axis << " and " << 10 << "time measurements\n";
+    cout << "Starting bifurcation diagram generation with resolution " << params.x_axis << "x" << params.y_axis << " and " << NTIME << "time measurements\n";
 
     //time measurement loop
     for (int itime = 0; itime < NTIME; itime ++){
         //Reset the diagram matrix to zero for each time measurement iteration
         fill(diagram_matrix.begin(), diagram_matrix.end(), 0);
 
-        int n_threads = thread::hardware_concurrency();
+        // Define future vector for the values 
         std::vector<std::future<void>> futures(n_threads);
 
         int columns_per_thread = params.x_axis / n_threads;
@@ -157,7 +213,7 @@ int main(int argc, char* argv[]) {
 
     //Write time measurements to a file for later analysis
     cout << "\nWriting time measurements to " << time_measurements_filename << " file:\n";
-    ofstream output_file(output_dir + time_measurements_filename);
+    ofstream output_file(output_dir / time_measurements_filename);
 
     for (double time : time_measurements) {
         output_file << time << "\n";
@@ -170,7 +226,7 @@ int main(int argc, char* argv[]) {
 
     //Write the diagram matrix to a file for later visualization
     cout << "\nWriting bifurcation diagram data to " << diagram_filename << " file:\n";
-    output_file.open(output_dir + diagram_filename);
+    output_file.open(output_dir / diagram_filename);
 
     for (int j = params.y_axis - 1; j >= 0; j--) {
         for (int i = 0; i < params.x_axis; i++) {
