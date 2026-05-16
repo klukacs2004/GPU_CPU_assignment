@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) {
     DiagramMatrix diagram_matrix(params.x_axis * params.y_axis, 0);
 
     //Constants for time measurement and progress tracking
-    const int NTIME = 50;
+    const int NTIME = 100;
     const int progress_update_interval = 100 / NTIME ;
     vector<double> time_measurements(NTIME);
 
