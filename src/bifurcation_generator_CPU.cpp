@@ -100,7 +100,7 @@ void calculate_columns(int i_start, int i_end, const DiaGenParameters& params, D
 }
 
 int main(int argc, char* argv[]) {
-    //Output directory for the generated files (can be modified as needed)
+    //Output directory for the generated files 
     const filesystem::path output_dir = "data";
 
     //Parse command line arguments in vars
@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     float r_max = 4.0f; 
     int nx = 2048; 
     int ny = 2048; 
-    int n_threads = std::thread::hardware_concurrency(); // /2 I tried to divide it by two but it got slower so passed it
+    int n_threads = std::thread::hardware_concurrency(); // /2; // I tried to divide it by two but it got slower so passed it
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -167,11 +167,11 @@ int main(int argc, char* argv[]) {
     DiagramMatrix diagram_matrix(params.x_axis * params.y_axis, 0);
 
     //Constants for time measurement and progress tracking
-    const int NTIME = 100;
-    const int progress_update_interval = 100 / NTIME ;
+    const int NTIME = 200;
+    const float progress_update_interval = 100.f / NTIME ;
     vector<double> time_measurements(NTIME);
 
-    cout << "Starting bifurcation diagram generation with resolution " << params.x_axis << "x" << params.y_axis << " and " << NTIME << "time measurements\n";
+    cout << "Starting bifurcation diagram generation with resolution " << params.x_axis << "x" << params.y_axis << " and " << NTIME << " time measurements\n";
 
     //time measurement loop
     for (int itime = 0; itime < NTIME; itime ++){
