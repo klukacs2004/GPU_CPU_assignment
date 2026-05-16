@@ -67,7 +67,10 @@ Here, the first two values define the lower and upper bounds of the population v
 
 The command above produces a bifurcation diagram with a resolution of 2048×2048 pixels.
 
-
+To see all available command-line options, run:
+```bash
+.\build\bifurcation_generator_CPU.exe --help
+```
 
 ## Plot the Bifurcation Diagram
 ```bash
