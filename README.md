@@ -28,7 +28,6 @@ GPU_CPU_ASSIGNMENT/
 ├── results/
 │   └── generated .png files
 ├── CMakeLists.txt
-├── activate.ps1
 └── README.md
 ```
 
