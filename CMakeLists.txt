@@ -5,8 +5,10 @@ project(GPU_CPU_assignment LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(bifurcation_generator_CPU
-    src/bifurcation_generator_CPU.cpp
+find_package(OpenCL REQUIRED)
+
+add_executable(bifurcation_generator_GPU
+    src/bifurcation_generator_GPU.cpp
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND MSVC)
