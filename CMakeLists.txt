@@ -11,4 +11,4 @@ add_executable(bifurcation_generator_GPU
     src/bifurcation_generator_GPU.cpp
 )
 
-target_link(bifurcation_generator_GPU PRIVATE)
+target_link_libraries(bifurcation_generator_GPU PRIVATE OpenCL::OpenCL)
