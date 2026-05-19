@@ -11,6 +11,29 @@ add_executable(bifurcation_generator_GPU
     src/bifurcation_generator_GPU.cpp
 )
 
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND MSVC)
+    target_compile_options(bifurcation_generator_GPU PRIVATE
+        /O2
+        /W4
+        /fp:fast
+        /arch:AVX2
+    )
+elseif(MSVC)
+    target_compile_options(bifurcation_generator_GPU PRIVATE
+        /O2
+        /W4
+        /fp:fast
+    )
+else()
+    target_compile_options(bifurcation_generator_GPU PRIVATE
+        -O3
+        -Wall
+        -Wextra
+        -march=native
+        -ffast-math
+    )
+endif()
+
 target_link_libraries(bifurcation_generator_GPU PRIVATE OpenCL::OpenCL)
 target_include_directories(bifurcation_generator_GPU PRIVATE
     ${CMAKE_SOURCE_DIR}/include

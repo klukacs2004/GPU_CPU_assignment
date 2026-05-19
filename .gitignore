@@ -4,3 +4,4 @@ build/
 
 activate.ps1
 
+vcpkg_installed/

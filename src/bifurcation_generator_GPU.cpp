@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <filesystem>
+#include <iomanip>
 
 #include <shared/parameters.h>
 #include <cpu/generator.hpp>
@@ -76,19 +77,18 @@ int main(int argc, char* argv[]){
     DiaGenParameters params =  initialize_parameters(x_min, x_max, r_min, r_max, nx, ny);
 
     //Generate filenames for the output file names
-    //const filesystem::path time_measurements_filename = "bifurcation_runtimes_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
+    const filesystem::path time_measurements_filename = "bifurcation_runtimes_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
     const filesystem::path diagram_filename = "bifurcation_diagram_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
 
     //Preallocate the diagram matrix for better cache performance
     vector<int> diagram_matrix(params.x_axis * params.y_axis, 0);
+
 
     // Run CPU computation
     auto t0 = tmark();
     cpu_generator(0, params.x_axis, params, diagram_matrix);
     auto t1 = tmark();
     auto t_cpu = delta_time(t0, t1);
-
-    fill(diagram_matrix.begin(), diagram_matrix.end(), 0);
 
     try{
         // Create and extract platforms provided by the computer
@@ -144,55 +144,89 @@ int main(int argc, char* argv[]){
         else if( is_same_v<T, double> ){ build_option = "-DT=double";}
         program.build({selected_device}, build_option.c_str());
 
-        auto bifurcation_kernel = cl::KernelFunctor<cl::Buffer, cl::Buffer>(program, "gpu_generator");
+        auto bifurcation_kernel = cl::KernelFunctor<cl::Buffer, cl::Buffer>(program, "gpu_generator2");
 
         // Allocate and setup data buffers:
         cl::Buffer buffer_params(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(DiaGenParameters), &params);
         cl::Buffer buffer_diagram{context, begin(diagram_matrix), end(diagram_matrix), false};  //read and write
 
-        // Extract grid size and run the warm up kernel
-        cl::NDRange grid_size = cl::NDRange{ static_cast<size_t>(params.x_axis)};
-        bifurcation_kernel(cl::EnqueueArgs{queue, grid_size}, buffer_params, buffer_diagram);
-        
-        // Synchronize:
-        queue.finish();
+        // Write the time data to a file
+        ofstream info_file(output_dir / time_measurements_filename);
 
-        // Measured kernel launches:
-        cl::Event ev = bifurcation_kernel(cl::EnqueueArgs{queue,grid_size}, buffer_params, buffer_diagram);
+        info_file << "-----------------------------\n";
+        info_file << "Selected platform vendor: " << selected_platform.getInfo<CL_PLATFORM_VENDOR>() << "\n";
+        info_file << "Selected platform name: " << selected_platform.getInfo<CL_PLATFORM_NAME>() << "\n";
+        info_file << "Selected device name: " << selected_device.getInfo<CL_DEVICE_NAME>() << "\n";
+        info_file << "Max work-group size: " << selected_device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>() << "\n";
+        info_file << "-----------------------------\n\n";
 
-        // Copy back results:
-        std::vector<cl::Event> vev{ev};
-        cl::Event read_ev;
-        queue.enqueueReadBuffer(buffer_diagram, CL_FALSE, 0, diagram_matrix.size() * sizeof(int), diagram_matrix.data(), &vev, &read_ev);
-        read_ev.wait();
+        auto max_items = selected_device.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>();
+        info_file << "Max work-item sizes: "
+                << max_items[0] << " "
+                << max_items[1] << " "
+                << max_items[2] << "\n\n";
 
-        // Kernel-inly GPU time
-        cl_ulong t_0 = ev.getProfilingInfo<CL_PROFILING_COMMAND_START>();
-        cl_ulong t_1 = ev.getProfilingInfo<CL_PROFILING_COMMAND_END>();
-        auto t_gpu_kernel = (t_1-t_0)*1e-6;
-
-        //Full GPU time: kernel+read
-        cl_ulong t_tot = read_ev.getProfilingInfo<CL_PROFILING_COMMAND_END>();
-        auto t_gpu_tot = (t_1-t_tot)*1e-6;
-
+        info_file << "CPU time [ms]: " << t_cpu << "\n";
         std::cout << "CPU time: " << t_cpu << " ms\n";
-        std::cout << "GPU time: " << t_gpu_kernel << " ms\n";
 
-        //Write the diagram matrix to a file for later visualization
-        cout << "\nBifurcation diagram generation completed\n";
+        info_file << left << setw(22) << "Workers_per_column" << " | " << setw(22) << "GPU kernel time [ms]" << "\n";
 
-        cout << "\nWriting bifurcation diagram data to " << diagram_filename << " file:\n";
-        ofstream output_file(output_dir / diagram_filename);
-        output_file.open(output_dir / diagram_filename);
+        info_file << string(22, '-') << "-+-" << string(22, '-') << "\n";
 
-        for (int j = params.y_axis - 1; j >= 0; j--) {
-            for (int i = 0; i < params.x_axis; i++) {
-                output_file << diagram_matrix[i * params.y_axis + j] << " ";
+        // Loop through the work-group sizes  
+        for(int iexp=0; iexp < 10; ++iexp){
+            fill(diagram_matrix.begin(), diagram_matrix.end(), 0);
+
+            int workers_per_column = 2 << iexp;
+            cl::NDRange global_size{static_cast<size_t>(params.x_axis), static_cast<size_t>(workers_per_column)};
+            cl::NDRange local_size{1, static_cast<size_t>(workers_per_column)};
+            // Extract grid size and run the warm up kernel
+            //cl::NDRange grid_size = cl::NDRange{ static_cast<size_t>(params.x_axis)};
+            bifurcation_kernel(cl::EnqueueArgs{queue, global_size, local_size}, buffer_params, buffer_diagram);
+            
+            // Synchronize:
+            queue.finish();
+
+            // Measured kernel launches:
+            cl::Event ev = bifurcation_kernel(cl::EnqueueArgs{queue,global_size, local_size}, buffer_params, buffer_diagram);
+
+            // Copy back results:
+            std::vector<cl::Event> vev{ev};
+            cl::Event read_ev;
+            queue.enqueueReadBuffer(buffer_diagram, CL_FALSE, 0, diagram_matrix.size() * sizeof(int), diagram_matrix.data(), &vev, &read_ev);
+            read_ev.wait();
+
+            // Kernel-inly GPU time
+            cl_ulong t_0 = ev.getProfilingInfo<CL_PROFILING_COMMAND_START>();
+            cl_ulong t_1 = ev.getProfilingInfo<CL_PROFILING_COMMAND_END>();
+            auto t_gpu_kernel = (t_1-t_0)*1e-6;
+
+            //Full GPU time: kernel+read
+            //cl_ulong t_tot = read_ev.getProfilingInfo<CL_PROFILING_COMMAND_END>();
+            //auto t_gpu_tot = (t_tot-t_0)*1e-6;
+
+            std::cout << "GPU time: " << t_gpu_kernel << " ms\n";
+
+            info_file << right << setw(22) << workers_per_column << " | " << setw(22) << fixed << setprecision(3) << t_gpu_kernel << "\n";
+
+            // Record the "fastes" diagram matrix
+            if(iexp == 6){
+                cout << "Writing bifurcation diagram data to " << diagram_filename << " file:\n";
+                ofstream output_file(output_dir / diagram_filename);
+
+                for (int j = params.y_axis - 1; j >= 0; j--) {
+                    for (int i = 0; i < params.x_axis; i++) {
+                        output_file << diagram_matrix[i * params.y_axis + j] << " ";
+                    }
+                    output_file << "\n";
+                }
+
+                output_file.close();
             }
-            output_file << "\n";
         }
 
-        output_file.close();
+        info_file.close();
+
     }
     catch(cl::BuildError& error){
         cout << "Build failed. Log:\n";
