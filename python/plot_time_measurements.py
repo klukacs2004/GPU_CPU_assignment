@@ -6,9 +6,8 @@ from pathlib import Path
 def plot_time_measurement(filename):
     data = np.loadtxt(filename) / 1e6
 
-    output_dir = Path(
-        r"C:\Users\User\OneDrive\Dokumentumok\Physics MSc\GPU\GPU_CPU_asignment\results"
-    )
+    output_dir = Path("results")
+    output_dir.mkdir(exist_ok=True)
     output_filename = Path(filename).stem + ".png"
 
     plt.hist(data, bins=20, edgecolor='black')

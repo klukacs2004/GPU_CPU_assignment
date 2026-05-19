@@ -8,9 +8,8 @@ from pathlib import Path
 def plot_bifurcation_diagram(filename, args):
     data = np.loadtxt(filename)
 
-    output_dir = Path(
-        r"C:\Users\User\OneDrive\Dokumentumok\Physics MSc\GPU\GPU_CPU_asignment\results"
-    )
+    output_dir = Path("results")
+    output_dir.mkdir(exist_ok=True)
 
     output_filename = Path(filename).stem + ".png"
     output_path = output_dir / output_filename
