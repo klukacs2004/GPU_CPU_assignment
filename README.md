@@ -54,7 +54,7 @@ GPU_CPU_ASSIGNMENT/
 
 Configure the project:
 ```bash
-cmake -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++
+cmake --preset ninja-clang 
 ```
 Build the executable:
 ```bash
@@ -67,7 +67,7 @@ On Windows, I used the Clang compiler with the following flags:
 For convenience, I also included a CMakeLists.txt file that supports both Linux and Windows builds.
 This is also necessary for the GPU implementation due to the OpenCL C style.
 
-The kernel implementation is contained by the .cl file in the src/gpu/ directory, and the host side is .cpp file here. 
+The kernel implementation is contained by the .cl file in the src/gpu/ directory and the host side is implemented in the .cpp file there. 
 
 ## Run
 
