@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(OpenCL REQUIRED)
 
 add_executable(bifurcation_generator_GPU
-    src/bifurcation_generator_GPU.cpp
+    src/gpu/bifurcation_generator_GPU.cpp
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND MSVC)

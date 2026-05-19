@@ -11,15 +11,25 @@ x_{n+1} = r x_n (1 - x_n
 
 The main computation is written in C++, while the plotting and visualization are done in Python. 
 
-At the moment, the repository only contains the CPU implementation.  
-The GPU implementation is planned for future development. 
 
 ## Project structure
 
 ```bash
 GPU_CPU_ASSIGNMENT/
+├── include/
+│   ├── bifurcation/
+│   │   └── logistic_map.h
+│   ├── cpu/
+│   │   ├── generator.hpp
+│   │   └── logistic_map.hpp
+│   └── gpu/
+│       └── parameters.h
 ├── src/
-│   └── bifurcation_generator_CPU.cpp
+│   ├── cpu/
+│   │   └── bifurcation_generator_CPU.cpp
+│   └── gpu/
+│       ├── bifurcation_generator_GPU.cpp
+│       └── bifurcation_generator.cl
 ├── python/
 │   ├── plot_bifurcation_diagram.py
 │   └── plot_time_measurements.py

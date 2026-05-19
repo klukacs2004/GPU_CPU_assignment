@@ -161,8 +161,8 @@ int main(int argc, char* argv[]) {
     DiaGenParameters params(x_min, x_max, r_min, r_max, nx, ny);
 
     //Generate filenames for the output files
-    const filesystem::path time_measurements_filename = "bifurcation_runtimes_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
-    const filesystem::path diagram_filename = "bifurcation_diagram_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
+    const filesystem::path time_measurements_filename = "bifurcation_runtimes_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + "_CPU.txt";
+    const filesystem::path diagram_filename = "bifurcation_diagram_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + "_CPU.txt";
 
     //Preallocate the diagram matrix for better cache performance
     DiagramMatrix diagram_matrix(params.x_axis * params.y_axis, 0);
