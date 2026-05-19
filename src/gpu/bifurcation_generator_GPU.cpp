@@ -133,7 +133,7 @@ int main(int argc, char* argv[]){
         cl::CommandQueue queue{ context, selected_device, qps};
 
         // Load and compile kernel program:
-        ifstream source{"src/bifurcation_generator.cl"};
+        ifstream source{"src/gpu/bifurcation_generator.cl"};
         if( !source.is_open() ){ throw runtime_error{ string{"Error opening kernel file: bifurcation_generator.cl"} }; }
         string source_string{ istreambuf_iterator<char>{ source },
                                    istreambuf_iterator<char>{} };
