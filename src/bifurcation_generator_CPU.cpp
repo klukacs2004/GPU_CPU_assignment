@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
     //Output directory for the generated files 
     const filesystem::path output_dir = "data";
 
-    //Parse command line arguments in vars
+    //Set the default parameter values
     float x_min = 0.0f; 
     float x_max = 1.0f; 
     float r_min = 2.5f; 
@@ -112,6 +112,7 @@ int main(int argc, char* argv[]) {
     int ny = 2048; 
     int n_threads = std::thread::hardware_concurrency(); // /2; // I tried to divide it by two but it got slower so passed it
 
+    //Parse command line arguments in vars
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
 

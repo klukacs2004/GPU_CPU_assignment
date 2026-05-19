@@ -12,3 +12,6 @@ add_executable(bifurcation_generator_GPU
 )
 
 target_link_libraries(bifurcation_generator_GPU PRIVATE OpenCL::OpenCL)
+target_include_directories(bifurcation_generator_GPU PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+)
