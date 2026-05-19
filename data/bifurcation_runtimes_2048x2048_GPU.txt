@@ -1,0 +1,22 @@
+-----------------------------
+Selected platform vendor: NVIDIA Corporation
+Selected platform name: NVIDIA CUDA
+Selected device name: NVIDIA T1200 Laptop GPU
+Max work-group size: 1024
+-----------------------------
+
+Max work-item sizes: 1024 1024 64
+
+CPU time [ms]: 4749.09
+Workers_per_column     | GPU kernel time [ms]  
+-----------------------+-----------------------
+                     2 |                699.091
+                     4 |                585.571
+                     8 |                546.349
+                    16 |                542.454
+                    32 |                511.454
+                    64 |                405.923
+                   128 |                211.077
+                   256 |                214.775
+                   512 |                222.702
+                  1024 |                230.130

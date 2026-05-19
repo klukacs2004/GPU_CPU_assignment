@@ -11,15 +11,25 @@ x_{n+1} = r x_n (1 - x_n
 
 The main computation is written in C++, while the plotting and visualization are done in Python. 
 
-At the moment, the repository only contains the CPU implementation.  
-The GPU implementation is planned for future development. 
 
 ## Project structure
 
 ```bash
 GPU_CPU_ASSIGNMENT/
+├── include/
+│   ├── bifurcation/
+│   │   └── logistic_map.h
+│   ├── cpu/
+│   │   ├── generator.hpp
+│   │   └── logistic_map.hpp
+│   └── shared/
+│       └── parameters.h
 ├── src/
-│   └── bifurcation_generator_CPU.cpp
+│   ├── cpu/
+│   │   └── bifurcation_generator_CPU.cpp
+│   └── gpu/
+│       ├── bifurcation_generator_GPU.cpp
+│       └── bifurcation_generator.cl
 ├── python/
 │   ├── plot_bifurcation_diagram.py
 │   └── plot_time_measurements.py
@@ -55,12 +65,19 @@ On Windows, I used the Clang compiler with the following flags:
 /O2 /W4 /fp:fast /arch:AVX2
 ```
 For convenience, I also included a CMakeLists.txt file that supports both Linux and Windows builds.
+This is also necessary for the GPU implementation due to the OpenCL C style.
+
+The kernel implementation is contained by the .cl file in the src/gpu/ directory, and the host side is .cpp file here. 
 
 ## Run
 
 Run the CPU bifurcation generator:
 ```bash
 .\build\bifurcation_generator_CPU.exe --xmin 0.0 --xmax 1.0 --rmin 2.5 --rmax 4.0 --nx 2048 --ny 2048   
+```
+Run the CPU bifurcation generator:
+```bash
+.\build\bifurcation_generator_GPU.exe --xmin 0.0 --xmax 1.0 --rmin 2.5 --rmax 4.0 --nx 2048 --ny 2048   
 ```
 Here, the first two values define the lower and upper bounds of the population variable \(x\).  The next two values specify the lower and upper bounds of the parameter \(r\).  The last value sets the resolution of the generated image.
 
@@ -73,12 +90,15 @@ To see all available command-line options, run:
 
 ## Plot the Bifurcation Diagram
 ```bash
-python .\python\plot_bifurcation_diagram.py data\bifurcation_diagram_2048x2048.txt --x_min 0.0 --x_max 1.0 --r_min 2.5 --r_max 4.0 --resolution 2048
+python .\python\plot_bifurcation_diagram.py data\bifurcation_diagram_2048x2048_CPU.txt --x_min 0.0 --x_max 1.0 --r_min 2.5 --r_max 4.0 --resolution 2048
+```
+```bash
+python .\python\plot_bifurcation_diagram.py data\bifurcation_diagram_2048x2048_GPU.txt --x_min 0.0 --x_max 1.0 --r_min 2.5 --r_max 4.0 --resolution 2048
 ```
 
 ## Plot Runtime Measurement
 ```bash
-python .\python\plot_time_measurements.py data\bifurcation_runtimes_2048x2048.txt 
+python .\python\plot_time_measurements.py data\bifurcation_runtimes_2048x2048_CPU.txt 
 ```
 ## Reference
 
@@ -88,4 +108,4 @@ https://commons.wikimedia.org/wiki/File:Logistic_Map_Bifurcation_Diagram,_Matplo
 
 ## Notes
 
-The main code performs 50 runtime measurements by default.  This value can be modified in the C++ source code. 
+The main code performs 200 runtime measurements by default.  This value can be modified in the C++ source code. 
