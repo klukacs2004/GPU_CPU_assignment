@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(bifurcation_generator_CPU
-    src/bifurcation_generator_CPU.cpp
+    src/cpu/bifurcation_generator_CPU.cpp
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND MSVC)

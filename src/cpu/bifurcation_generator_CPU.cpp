@@ -28,23 +28,25 @@ FloatType logistic_map(FloatType x, FloatType r) {
     return r * x * (1 - x);
 }
 
+using T = float;
+
 //Struct to hold the parameters for the bifurcation diagram generation
 struct DiaGenParameters {
     //Default parameters for the bifurcation diagram generation, can be overridden by command line arguments
     int x_axis = 1000;
     int y_axis = 1000; 
-    float x_min = 0.0f;
-    float x_max = 1.0f;
-    float r_min = 2.5;
-    float r_max = 4.0;
-    float x_init = 0.25f;   
+    T x_min = 0.0f;
+    T x_max = 1.0f;
+    T r_min = 2.5;
+    T r_max = 4.0;
+    T x_init = 0.25f;   
 
     //Contants for stabilization and sampling iteration according to the wikipedia description of the bifurcation diagram calculation
-    int stabilization_iterations = 1000;
-    int sample_iterations = 1'000'000;
+    const int stabilization_iterations = 1000;
+    const int sample_iterations = 1'000'000;
 
-    float x_range_inv;
-    float r_step;
+    T x_range_inv;
+    T r_step;
 
     // Define  a function to avoid duplicated initialization
     private:
@@ -59,14 +61,14 @@ struct DiaGenParameters {
             initialize_derived_parameters();
         }
 
-        DiaGenParameters(float x_min_, float x_max_, float r_min_, float r_max_, int resolution_x, int resolution_y) :
+        DiaGenParameters(T x_min_, T x_max_, T r_min_, T r_max_, int resolution_x, int resolution_y) :
             x_axis(resolution_x),
             y_axis(resolution_y),
             x_min(x_min_),
             x_max(x_max_),
             r_min(r_min_),
             r_max(r_max_){
-               initialize_derived_parameters();   
+            initialize_derived_parameters();   
         }
 };
 
@@ -76,8 +78,8 @@ using DiagramMatrix = std::vector<int>;
 //Function to calculate a portion of the bifurcation diagram columns, defined to be run in parallel threads
 void calculate_columns(int i_start, int i_end, const DiaGenParameters& params, DiagramMatrix& diagram_matrix) {
     for (int i = i_start; i < i_end; i++) {
-        float r = params.r_min + params.r_step * i;           //calculate r value for this column
-        float x = params.x_init;                    //initialize x to the same for each r
+        T r = params.r_min + params.r_step * i;           //calculate r value for this column
+        T x = params.x_init;                    //initialize x to the same for each r
 
         //Stablization loop to let the system reach the attractor before sampling
         for (int k = 0; k < params.stabilization_iterations; k++) {
@@ -104,10 +106,10 @@ int main(int argc, char* argv[]) {
     const filesystem::path output_dir = "data";
 
     //Parse command line arguments in vars
-    float x_min = 0.0f; 
-    float x_max = 1.0f; 
-    float r_min = 2.5f; 
-    float r_max = 4.0f; 
+    T x_min = 0.0f;
+    T x_max = 1.0f; 
+    T r_min = 2.5f; 
+    T r_max = 4.0f; 
     int nx = 2048; 
     int ny = 2048; 
     int n_threads = std::thread::hardware_concurrency(); // /2; // I tried to divide it by two but it got slower so passed it
@@ -160,15 +162,15 @@ int main(int argc, char* argv[]) {
     DiaGenParameters params(x_min, x_max, r_min, r_max, nx, ny);
 
     //Generate filenames for the output files
-    const filesystem::path time_measurements_filename = "bifurcation_runtimes_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
-    const filesystem::path diagram_filename = "bifurcation_diagram_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + ".txt";
+    const filesystem::path time_measurements_filename = "bifurcation_runtimes_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + "_CPU.txt";
+    const filesystem::path diagram_filename = "bifurcation_diagram_" + to_string(params.y_axis) + "x" + to_string(params.x_axis) + "_CPU.txt";
 
     //Preallocate the diagram matrix for better cache performance
     DiagramMatrix diagram_matrix(params.x_axis * params.y_axis, 0);
 
     //Constants for time measurement and progress tracking
     const int NTIME = 200;
-    const float progress_update_interval = 100.f / NTIME ;
+    const T progress_update_interval = 100.f / NTIME ;
     vector<double> time_measurements(NTIME);
 
     cout << "Starting bifurcation diagram generation with resolution " << params.x_axis << "x" << params.y_axis << " and " << NTIME << " time measurements\n";
