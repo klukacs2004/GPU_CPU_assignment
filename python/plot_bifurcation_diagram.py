@@ -31,8 +31,14 @@ def plot_bifurcation_diagram(filename, args):
         aspect="auto",
         cmap=cmap,
         extent=[args.r_min, args.r_max, args.x_min, args.x_max],
+
+        #range for the gpu version
         vmax=50000000,
         vmin=1000,
+
+        #for the cpu version
+        #vmax=3000000,
+        #vmin=10000,
         interpolation="bicubic",
     )
 
