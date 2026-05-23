@@ -16,8 +16,8 @@ add_executable(bifurcation_generator_CPU
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND MSVC)
-    target_compile_options(bifurcation_generator_GPU PRIVATE /O2 /W4 /fp:fast /arch:AVX2)
-    target_compile_options(bifurcation_generator_CPU PRIVATE /O2 /W4 /fp:fast /arch:AVX2)
+    target_compile_options(bifurcation_generator_GPU PRIVATE /clang:-O3 /W4 /fp:fast /arch:AVX2)
+    target_compile_options(bifurcation_generator_CPU PRIVATE /clang:-O3 /W4 /fp:fast /arch:AVX2)
 
 elseif(MSVC)
     target_compile_options(bifurcation_generator_GPU PRIVATE /O2 /W4 /fp:fast)
